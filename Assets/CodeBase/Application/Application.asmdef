@@ -1,0 +1,4 @@
+{
+	"name": "Application",
+	"references": ["Core", "VContainer", "UniRx", "DoTween", "UniTask", "Unity.TextMeshPro"]
+}
