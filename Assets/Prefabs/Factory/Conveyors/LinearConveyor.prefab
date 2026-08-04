@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6161459563348266444}
   - component: {fileID: 327006427562445725}
   - component: {fileID: 6398702977672217676}
-  - component: {fileID: 2104492842528486607}
+  - component: {fileID: 523097226663301060}
   m_Layer: 0
   m_Name: LinearConveyor
   m_TagString: Untagged
@@ -89,7 +89,7 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &2104492842528486607
+--- !u!114 &523097226663301060
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -98,12 +98,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 936301015774644070}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 41a0d83f206746b6af7c42871655bc68, type: 3}
+  m_Script: {fileID: 11500000, guid: 32858a229b074e0cba680f65123b281b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  beltStart: {fileID: 6838956751241574576}
-  beltEnd: {fileID: 8508629378208995804}
-  _materialView: {fileID: 1730362727603368734, guid: 482b7a6534572f547b85e1b398f5f814, type: 3}
+  _materialView: {fileID: 6905851796635925858, guid: 17f93f1245baf1f42b31a3e1de203118, type: 3}
 --- !u!1 &3000113348213517101
 GameObject:
   m_ObjectHideFlags: 0
