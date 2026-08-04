@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using CodeBase.Application.Factory.View;
 using CodeBase.Application.Material;
 using CodeBase.Core.Factory;
 using CodeBase.Core.Factory.Conveyor;
+using TMPro;
 using UniRx;
 using UnityEngine;
 
@@ -11,8 +13,9 @@ namespace CodeBase.Application.Factory.Conveyors
 {
     public class ConveyorView : FactoryNodeView
     {
-        [SerializeField] private MaterialView _materialView; 
-        private readonly List<MaterialView> _materialViews = new();
+        [SerializeField] private MaterialView _materialView;
+        [SerializeField] private TMP_Text _text;
+        private readonly Dictionary<ItemOnBelt, MaterialView> _materialViews = new();
         public ConveyorSegment ConveyorSegment;
         public override FactoryNode FactoryNode => ConveyorSegment;
 
@@ -22,13 +25,15 @@ namespace CodeBase.Application.Factory.Conveyors
             ConveyorSegment.Items.CollectionChanged += OnCollectionChanged;
         }
 
+        private void Update() => _text.text = $"MainQueue: {ConveyorSegment.MainQueue}\n AddQueue: {ConveyorSegment.AdditionalQueue}";
+
         private void SetMaterialMovement(MaterialView materialView, ItemOnBelt item)
         {
-            item.X.Current.DistinctUntilChanged().CombineLatest(item.Y.Current, (x, y) => new Vector2(x, y))
+            item.X.Current.TakeUntilDestroy(materialView).DistinctUntilChanged().CombineLatest(item.Y.Current, (x, y) => new Vector2(x, y))
                 .Subscribe(vector =>
                     {
-                        Vector3 pos = materialView.transform.position;
-                        materialView.transform.position.Set(vector.x, vector.y, pos.z);
+                        Vector3 pos = materialView.transform.localPosition;
+                        materialView.transform.localPosition = new Vector3(vector.x, 0.35f, vector.y) - new Vector3(0.5f, 0, 0.5f);
                     }
                 ).AddTo(materialView);
         }
@@ -42,15 +47,12 @@ namespace CodeBase.Application.Factory.Conveyors
                 MaterialView newMaterial = Instantiate(_materialView, transform.position, Quaternion.identity);
                 newMaterial.transform.SetParent(transform);
                 SetMaterialMovement(newMaterial, ConveyorSegment.Items[args.NewStartingIndex]);
-                _materialViews.Add(newMaterial);
+                _materialViews.Add((ItemOnBelt)args.NewItems[0], newMaterial);
             }
             else
             {
                 // todo make pool of views and add composite disposable for itemOnBelt reactive properties
-                if (_materialViews.Count <= 0)
-                    return;
-                Destroy(_materialViews[^1].gameObject);
-                _materialViews.RemoveAt(_materialViews.Count - 1);
+                Destroy(_materialViews[(ItemOnBelt)args.OldItems[0]].gameObject);
             }
         }
     }
