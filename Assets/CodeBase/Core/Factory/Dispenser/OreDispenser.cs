@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using CodeBase.Core.Factory.Grid;
 using CodeBase.Core.Material;
+using CodeBase.Core.Mathematics;
 using UniRx;
 
 namespace CodeBase.Core.Factory.Dispenser
 {
     public struct OreStorage
     {
-        public MaterialType MaterialType { get; private set; }
-        public ItemProgress Quantity { get; private set; }
+        public MaterialType MaterialType { get; }
+        public ItemProgress Quantity { get; }
 
         public OreStorage(MaterialType materialType, int capacity)
         {
@@ -20,16 +21,18 @@ namespace CodeBase.Core.Factory.Dispenser
     
     public class OreDispenser : FactoryNode, IDisposable
     {
-        public float OrePerSecond { get; private set; }
-        public TimeSpan OreTransferInterval { get; private set; }
-        public ItemProgress MiningProgress => new(0, 1);
+        public float OrePerSecond { get; }
+        public TimeSpan OreTransferInterval { get; }
+        public ItemProgress MiningProgress { get; } = ItemProgress.Normalized();
         public OreStorage OreStorage { get; }
-        public List<ReceiverNode> Receivers { get; private set; } = new();
+        public List<ReceiverNode> Receivers { get; } = new();
         private int _receiverNumber;
-        private CompositeDisposable _disposables;
+        private readonly CompositeDisposable _disposables = new();
         private readonly GridMap _gridMap;
 
-        public OreDispenser(float orePerSecond, OreStorage oreStorage, GridMap gridMap, TimeSpan oreTransferInterval)
+        public OreDispenser(float orePerSecond, OreStorage oreStorage, GridMap gridMap, TimeSpan oreTransferInterval,
+                            Vector2Int position, Vector2Int size
+        ) : base(position, size)
         {
             OrePerSecond = orePerSecond;
             OreStorage = oreStorage;
