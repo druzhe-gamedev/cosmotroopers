@@ -2,6 +2,10 @@
 
 namespace CodeBase.Core.Mathematics
 {
+    /// <summary>
+    /// NodeRotation encapsulates int32 Angle property inside it, that must always be divisible by 90
+    /// <remarks>0 = East; 90 = South; 180 = West; 270 = North</remarks>
+    /// </summary>
     public struct NodeRotation
     {
         public int Angle { get; private set; }
