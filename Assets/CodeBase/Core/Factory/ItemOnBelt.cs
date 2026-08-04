@@ -33,13 +33,13 @@ namespace CodeBase.Core.Factory
     {
         public MaterialType MaterialType { get; set; }
 
-        public ItemProgress X { get; private set; } = ItemProgress.Normalized();
-        public ItemProgress Y { get; private set; } = ItemProgress.Normalized();
+        public ItemProgress X { get; } = ItemProgress.Normalized();
+        public ItemProgress Y { get; } = ItemProgress.Normalized();
 
         public ReactiveProperty<Vector2> Position = new(Vector2.zero);
 
         public ItemOnBelt(MaterialType materialType) => MaterialType = materialType;
 
-        public override string ToString() => $"{MaterialType} {X} {Y}";
+        public override string ToString() => $"{MaterialType} {{{X.Current.Value}; {Y.Current.Value}}}";
     }
 }

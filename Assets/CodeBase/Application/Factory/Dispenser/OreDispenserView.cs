@@ -20,10 +20,7 @@ namespace CodeBase.Application.Factory.Dispenser
             _dispenser = dispenser;
             _dispenser.MiningProgress.Current
                       .DistinctUntilChanged()
-                      .Subscribe(progress => 
-                          _miningProgress.value = 
-                              Mathf.MoveTowards(_miningProgress.value, progress, _progressBarSpeed)
-            );
+                      .Subscribe(progress => _miningProgress.value = progress).AddTo(this);
         }
 
         private void OnDisable()

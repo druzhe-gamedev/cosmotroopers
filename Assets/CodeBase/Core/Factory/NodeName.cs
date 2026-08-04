@@ -4,7 +4,7 @@ namespace CodeBase.Core.Factory
 {
     public struct NodeName : IEquatable<NodeName>
     {
-        public string Name { get; private set; }
+        public string Name { get; }
 
         public static NodeName Create(FactoryNode node) => new($"{node.GetType()} {node.Position}");
         
