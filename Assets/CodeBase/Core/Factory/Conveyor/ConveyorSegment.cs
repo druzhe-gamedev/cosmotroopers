@@ -55,7 +55,7 @@ namespace CodeBase.Core.Factory.Conveyor
             _queueCapacity = queueCapacity;
             _halfCapacity = (byte)(queueCapacity / 2);
             _speed = speed;
-            _itemSize = 1f / queueCapacity;
+            _itemSize = 1f / (queueCapacity - 1);
             
             _mainQueue = new ConveyorQueue();
             _additionalQueue = new ConveyorQueue();
@@ -149,9 +149,18 @@ namespace CodeBase.Core.Factory.Conveyor
                     // direction
                     int sign = Math.Sign(_halfCapacity - lastStep);
                     
-                    // (sign + 1) / 2 eliminates all values except 1 (because of indexing from 0)
-                    // ReSharper disable once PossibleLossOfFraction
                     float target = (lastStep + (sign + 1) / 2) * _itemSize;
+                    
+                    if (lastStep == _halfCapacity)
+                    {
+                        sign = Math.Sign(0.5f - currentY + translation);
+                        item.Y.AddClamped(translation * sign);
+                        
+                        if(sign == 1 && currentY > 0.5f ||
+                           sign == -1 && currentY < 0.5f)
+                            item.Y.SetClamped(0.5f);
+                        continue;
+                    }
                     
                     if (sign == 1 && currentY < target ||
                         sign == -1 && currentY > target)
@@ -159,16 +168,12 @@ namespace CodeBase.Core.Factory.Conveyor
                     else
                     {
                         item.Y.SetClamped(target);
-                        
-                        bool isMigrating = nextStep == _halfCapacity;
+                        bool isMigrating = nextStep == _halfCapacity - 1;
                         bool isNextOccupied = (isMigrating &&
-                                               _mainQueue.IsOccupied(_halfCapacity)) ||
-                                               _additionalQueue.IsOccupied(nextStep);
+                                           _mainQueue.IsOccupied((byte)(_halfCapacity - 1))) ||
+                                           _additionalQueue.IsOccupied(nextStep);
                         if (isNextOccupied)
                             continue;
-
-                        if(isMigrating)
-                            item.Y.SetClamped(0.5f);
                         
                         _lastSteps[item] = nextStep;
                         _additionalQueue.Off(lastStep);
