@@ -5,7 +5,7 @@ using CodeBase.Core.Material;
 using CodeBase.Core.Mathematics;
 using UniRx;
 
-namespace CodeBase.Core.Factory.Dispenser
+namespace CodeBase.Core.Factory.Miner
 {
     public struct OreStorage
     {
@@ -19,28 +19,24 @@ namespace CodeBase.Core.Factory.Dispenser
         }
     }
     
-    public class OreDispenser : FactoryNode, IDisposable
+    public class OreMiner : FactoryNode, IDisposable
     {
         public float OrePerSecond { get; }
-        public TimeSpan OreTransferInterval { get; }
         public ItemProgress MiningProgress { get; } = ItemProgress.Normalized();
         public OreStorage OreStorage { get; }
-        public List<ReceiverNode> Receivers { get; } = new();
         private int _receiverNumber;
         private readonly CompositeDisposable _disposables = new();
-        private readonly GridMap _gridMap;
 
-        public OreDispenser(float orePerSecond, OreStorage oreStorage, GridMap gridMap, TimeSpan oreTransferInterval,
-                            Vector2Int position, Vector2Int size
-        ) : base(position, size)
+        public OreMiner(GridMap gridMap, NodePositioning nodePositioning, OreStorage oreStorage, float orePerSecond,
+                        TimeSpan oreTransferInterval
+        ) : base(gridMap, nodePositioning)
         {
             OrePerSecond = orePerSecond;
             OreStorage = oreStorage;
-            _gridMap = gridMap;
 
-            MiningProgress.Current
-                          .Where(_ => MiningProgress.IsMax && !oreStorage.Quantity.IsMax)
-                          .Subscribe(_ => Mine()).AddTo(_disposables);
+            Observable.EveryUpdate()
+                      .Where(_ => MiningProgress.IsMax && !oreStorage.Quantity.IsMax)
+                      .Subscribe(_ => Mine()).AddTo(_disposables);
 
             Observable.Interval(oreTransferInterval).Subscribe(_ => TryTransferItem()).AddTo(_disposables);
         }
@@ -51,10 +47,9 @@ namespace CodeBase.Core.Factory.Dispenser
         
         private void Mine() 
         {
-            OreStorage.Quantity.AddClamped(1);
+            MiningProgress.Reset();
             
-            if (!OreStorage.Quantity.IsMax)
-                MiningProgress.Reset();
+            OreStorage.Quantity.AddClamped(1);
         }
 
         private void TryTransferItem()
@@ -64,10 +59,12 @@ namespace CodeBase.Core.Factory.Dispenser
             
             ItemOnBelt item = new (OreStorage.MaterialType);
 
-            if (Receivers[_receiverNumber].TryAccept(new ItemTransfer(item, this)))
-                OreStorage.Quantity.AddClamped(-1);
+            Vector2Int targetPosition = Position + LookDirection;
+            if (!GridMap.FactoryNodes.TryGetValue(targetPosition, out FactoryNode node) ||
+                node is not ReceiverNode receiverNode) return;
 
-            _receiverNumber = (_receiverNumber + 1) % Receivers.Count;
+            if (!receiverNode.TryAccept(new ItemTransfer(item, this))) return;
+            OreStorage.Quantity.AddClamped(-1);
         }
     }
 }
