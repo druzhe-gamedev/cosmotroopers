@@ -3,7 +3,7 @@ using CodeBase.Core.Factory.Grid;
 using UnityEngine;
 using VContainer.Unity;
 
-namespace CodeBase.Application.Factory
+namespace CodeBase.Application.Factory.EntryPoints
 {
     public class FactoryPresenter : ITickable
     {
