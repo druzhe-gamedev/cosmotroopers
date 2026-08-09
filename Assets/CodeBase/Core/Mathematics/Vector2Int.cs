@@ -2,6 +2,7 @@
 
 namespace CodeBase.Core.Mathematics
 {
+    [Serializable]
     public struct Vector2Int
     {
         public int X { get; set; }
