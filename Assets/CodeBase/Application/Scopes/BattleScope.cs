@@ -1,5 +1,6 @@
 ﻿using CodeBase.Application.Common.UI;
-using CodeBase.Application.Factory;
+using CodeBase.Application.Factory.Config;
+using CodeBase.Application.Factory.EntryPoints;
 using CodeBase.Application.Grid.Interaction;
 using CodeBase.Core.Factory.Grid;
 using UnityEngine;
@@ -12,6 +13,7 @@ namespace CodeBase.Application.Scopes
     {
         [SerializeField] private UIConfig _uiConfig;
         [SerializeField] private FactoryAssets _factoryAssets;
+        [SerializeField] private Building _building;
         
         protected override void Configure(IContainerBuilder builder)
         {
@@ -28,7 +30,7 @@ namespace CodeBase.Application.Scopes
             builder.RegisterComponent(_uiConfig);
             builder.RegisterComponent(_factoryAssets);
             
-            builder.RegisterComponentOnNewGameObject<Building>(Lifetime.Singleton, "BuildingSystem");
+            builder.RegisterComponentInNewPrefab(_building, Lifetime.Singleton);
             builder.RegisterComponentInNewPrefab(_uiConfig.HUD, Lifetime.Singleton);
         }
     }

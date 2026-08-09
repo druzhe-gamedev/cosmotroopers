@@ -11,7 +11,7 @@ namespace CodeBase.Core.Mathematics
         public int Angle { get; private set; }
         
         public void RotateCw(int times = 1) => Angle = (Angle + 90 * times) % 360;
-        public void RotateCcw(int times = 1) => Angle = (Angle - 90 * times) % 360;
+        public void RotateCcw(int times = 1) => Angle = (Angle + 360 - 90 * (times % 4)) % 360;
 
         public NodeRotation(int angle)
         {

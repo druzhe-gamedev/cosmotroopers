@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using VContainer;
 using VContainer.Unity;
 
-namespace CodeBase.Application.Factory
+namespace CodeBase.Application.Factory.EntryPoints
 {
     public class FactoryUI : IStartable
     {
