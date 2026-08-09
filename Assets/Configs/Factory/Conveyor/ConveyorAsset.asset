@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Name>k__BackingField: LinearConveyor
   <Description>k__BackingField: Default conveyor
-  <ConveyorView>k__BackingField: {fileID: 0}
+  <Icon>k__BackingField: {fileID: 21300000, guid: 90f78e11487429c47b2083172d0e1ff4, type: 3}
+  <Size>k__BackingField: {x: 1, y: 1}
+  <View>k__BackingField: {fileID: 8722449170234895918, guid: 7925b8bc123b74345bbf9ef5979461ff, type: 3}
   <Capacity>k__BackingField: 5
-  <Speed>k__BackingField: 0.4
+  <Speed>k__BackingField: 1
