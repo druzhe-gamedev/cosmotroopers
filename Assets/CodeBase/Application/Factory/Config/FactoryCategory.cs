@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace CodeBase.Application.Factory
+namespace CodeBase.Application.Factory.Config
 {
     [CreateAssetMenu(fileName = "NewSegmentsList", menuName = "Factory/Segments List")]
     public class FactoryCategory : ScriptableObject

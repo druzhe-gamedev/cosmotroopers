@@ -1,4 +1,5 @@
-﻿using CodeBase.Core.Mathematics;
+﻿using CodeBase.Core.Factory.Grid;
+using CodeBase.Core.Mathematics;
 
 namespace CodeBase.Core.Factory
 {
@@ -6,7 +7,7 @@ namespace CodeBase.Core.Factory
     {
         public abstract bool TryAccept(ItemTransfer transfer);
 
-        protected ReceiverNode(Vector2Int position, Vector2Int size) : base(position, size) { }
+        protected ReceiverNode(GridMap gridMap, NodePositioning nodePositioning) : base(gridMap, nodePositioning) { }
     }
     
     public abstract class FactoryNode
@@ -16,8 +17,11 @@ namespace CodeBase.Core.Factory
         public Vector2Int Size { get; protected set; }
         public NodeRotation NodeRotation { get; protected set; }
         public Vector2Int LookDirection => NodeRotation.ToVector();
+        public GridMap GridMap { get; }
 
-        protected FactoryNode(Vector2Int position, Vector2Int size) => (Position, Size) = (position, size);
+        protected FactoryNode(GridMap gridMap, NodePositioning nodePositioning) => (Position, Size, NodeRotation, GridMap) =
+            (nodePositioning.Position, nodePositioning.Size, nodePositioning.NodeRotation, gridMap);
+        
         public abstract void Tick(float deltaTime); 
     }
 }

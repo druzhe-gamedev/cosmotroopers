@@ -1,18 +1,19 @@
-﻿using CodeBase.Application.Factory.View;
+﻿using CodeBase.Application.Factory.Config;
 using CodeBase.Core.Factory;
+using CodeBase.Core.Factory.Conveyor;
+using CodeBase.Core.Factory.Grid;
 using UnityEngine;
 
-namespace CodeBase.Application.Factory.Conveyors.Assets
+namespace CodeBase.Application.Factory.Conveyor.Assets
 {
     [CreateAssetMenu(fileName = "ConveyorAsset", menuName = "Factory/Conveyor")]
-    public class ConveyorAsset : FactoryNodeAsset
+    public class ConveyorAsset : FactoryNodeAsset<ConveyorView, ConveyorSegment>
     {
-        [field: SerializeField] public string Name { get; private set; }
-        [field: SerializeField, TextArea] public string Description { get; private set; }
-        [field: SerializeField] public ConveyorView ConveyorView { get; private set; }
-        [field: SerializeField] public int Capacity { get; private set;  }
+        [field: SerializeField] public override ConveyorView View { get; protected set; }
+        [field: SerializeField] public byte Capacity { get; private set;  }
         [field: SerializeField] public float Speed { get; private set; }
-        [field: SerializeField] public override Sprite Icon { get; protected set; }
-        public override FactoryNodeView FactoryNodeView => ConveyorView;
+
+        protected override ConveyorSegment CreateTypedNode(GridMap gridMap, NodePositioning nodePositioning) =>
+            new ConveyorSegment(Capacity, Speed, gridMap, nodePositioning);
     }
 }
