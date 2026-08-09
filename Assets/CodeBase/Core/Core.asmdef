@@ -2,7 +2,7 @@
     "name": "Core",
     "rootNamespace": "",
     "references": [
-        "UniRx"
+        "UniRx", "IsExternalInit"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

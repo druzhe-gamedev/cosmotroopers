@@ -1,4 +1,4 @@
 {
 	"name": "Application",
-	"references": ["Core", "VContainer", "UniRx", "DoTween", "UniTask", "Unity.TextMeshPro"]
+	"references": ["Core", "VContainer", "UniRx", "UniTask", "Unity.TextMeshPro", "DOTween.Modules", "IsExternalInit"]
 }
