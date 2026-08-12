@@ -7,13 +7,13 @@ using UnityEngine;
 namespace CodeBase.Application.Factory.Conveyor.Assets
 {
     [CreateAssetMenu(fileName = "ConveyorAsset", menuName = "Factory/Conveyor")]
-    public class ConveyorAsset : FactoryNodeAsset<ConveyorView, ConveyorSegment>
+    public class ConveyorAsset : FactoryNodeAsset<ConveyorView, ConveyorBase>
     {
         [field: SerializeField] public override ConveyorView View { get; protected set; }
         [field: SerializeField] public byte Capacity { get; private set;  }
         [field: SerializeField] public float Speed { get; private set; }
 
-        protected override ConveyorSegment CreateTypedNode(GridMap gridMap, NodePositioning nodePositioning) =>
+        protected override ConveyorBase CreateTypedNode(GridMap gridMap, NodePositioning nodePositioning) =>
             new ConveyorSegment(Capacity, Speed, gridMap, nodePositioning);
     }
 }

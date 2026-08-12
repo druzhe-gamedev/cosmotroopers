@@ -27,51 +27,15 @@ namespace CodeBase.Core.Factory.Conveyor
 
         public override string ToString() => int.Parse(Convert.ToString(_queue, 2)).ToString("00000");
     }
-
-    public struct ItemStep : IEquatable<ItemStep>
-    {
-        public bool IsMainQueue;
-        public byte Step;
-
-        public ItemStep(byte step, bool isMainQueue)
-        {
-            Step = step;
-            IsMainQueue = isMainQueue;
-        }
-
-        public bool Equals(ItemStep other) => IsMainQueue == other.IsMainQueue && Step == other.Step;
-
-        public override bool Equals(object obj) => obj is ItemStep other && Equals(other);
-        public override int GetHashCode() => HashCode.Combine(IsMainQueue, Step);
-    }
     
-    public class ConveyorSegment : ReceiverNode
+    public class ConveyorSegment : ConveyorBase
     {
-        public ObservableCollection<ItemOnBelt> Items { get; } = new();
-        
         private readonly ConveyorQueue _mainQueue;
         private readonly ConveyorQueue _additionalQueue;
 
-        public ConveyorQueue MainQueue => _mainQueue;
-        public ConveyorQueue AdditionalQueue => _additionalQueue;
-
-        private readonly Dictionary<ItemOnBelt, ItemStep> _lastSteps = new();
-        private readonly float _speed;
-        private readonly byte _queueCapacity;
-        private readonly byte _halfCapacity;
-        private readonly float _itemSize;
-
         public ConveyorSegment(byte queueCapacity, float speed, GridMap gridMap, NodePositioning nodePositioning) 
-            : base(gridMap, nodePositioning)
+            : base(gridMap, nodePositioning, speed, queueCapacity)
         {
-            if (queueCapacity % 2 != 1 || queueCapacity < 3)
-                throw new Exception("Capacity must be odd and equal or more than 3");
-            
-            _queueCapacity = queueCapacity;
-            _halfCapacity = (byte)(queueCapacity / 2);
-            _speed = speed;
-            _itemSize = 1f / (queueCapacity - 1);
-            
             _mainQueue = new ConveyorQueue();
             _additionalQueue = new ConveyorQueue();
         }
@@ -108,7 +72,7 @@ namespace CodeBase.Core.Factory.Conveyor
                 // if position is {0.5; 1}, step = _queueCapacity -1
                 float xClamp = isBack ? 0f : 0.5f;
                 float yClamp = isBack ? 0.5f : isRight ? 1 : 0;
-                byte targetStep = (byte)(!isBack && isRight ? _queueCapacity - 1 : 0);
+                byte targetStep = (byte)(!isBack && isRight ? QueueCapacity - 1 : 0);
                 byte nextStep = (byte)(targetStep + 1);
                 if (!isBack && isRight)
                     nextStep = (byte)(targetStep - 1);
@@ -116,7 +80,7 @@ namespace CodeBase.Core.Factory.Conveyor
                 if (queue.IsOccupied(nextStep)) return false;
 
                 queue.TryOccupy(targetStep);
-                _lastSteps[transfer.Item] = new(targetStep, isBack);
+                LastSteps[transfer.Item] = new(targetStep, isBack);
                 Items.Add(transfer.Item);
                 transfer.Item.X.SetClamped(xClamp);
                 transfer.Item.Y.SetClamped(yClamp);
@@ -129,13 +93,13 @@ namespace CodeBase.Core.Factory.Conveyor
             for (byte i = 0; i < Items.Count; i++)
             {
                 ItemOnBelt item = Items[i];
-                ItemStep lastQueueStep = _lastSteps[item];
+                ItemStep lastQueueStep = LastSteps[item];
                 byte lastStep = lastQueueStep.Step;
-                float translation = _speed * deltaTime;
+                float translation = Speed * deltaTime;
                 
                 if (lastQueueStep.IsMainQueue)
                 {
-                    float target = lastStep * _itemSize;
+                    float target = lastStep * ItemSize;
                     byte nextStep = (byte)(lastStep + 1);
                     
                     if (item.X.IsMax)
@@ -151,11 +115,11 @@ namespace CodeBase.Core.Factory.Conveyor
                     {
                         item.X.SetClamped(target);
                             
-                        if(lastStep == _queueCapacity || _mainQueue.IsOccupied(nextStep))
+                        if(lastStep == QueueCapacity || _mainQueue.IsOccupied(nextStep))
                             continue;
                         
                         // reach target, increment step
-                        _lastSteps[item] = new ItemStep(nextStep, true);
+                        LastSteps[item] = new ItemStep(nextStep, true);
                         _mainQueue.Off(lastStep);
                         _mainQueue.TryOccupy(nextStep);
                     }
@@ -164,7 +128,7 @@ namespace CodeBase.Core.Factory.Conveyor
                 {
                     float currentY = item.Y.Current.Value;
                     int sign = Math.Sign(0.5f - currentY);
-                    float target = (lastStep/* + (sign - 1) / 2*/) * _itemSize;
+                    float target = lastStep * ItemSize;
                     
                     if ((sign == 1 && currentY < target) ||
                         (sign == -1 && currentY > target))
@@ -179,18 +143,18 @@ namespace CodeBase.Core.Factory.Conveyor
                         item.Y.SetClamped(target);
                         byte nextStep = (byte)(lastStep + (currentY > 0.5 ? -1 : 1));
 
-                        if (lastStep == _halfCapacity)
+                        if (lastStep == HalfCapacity)
                         {
                             if (!_mainQueue.TryOccupy(nextStep))
                                 continue;
                             
                             _mainQueue.Off(lastStep);
-                            _lastSteps[item] = new ItemStep(nextStep, true);
+                            LastSteps[item] = new ItemStep(nextStep, true);
                             continue;
                         }
                         
-                        bool isMigrating = nextStep == _halfCapacity;
-                        bool isOccupied = (isMigrating && _mainQueue.IsOccupied(_halfCapacity)) ||
+                        bool isMigrating = nextStep == HalfCapacity;
+                        bool isOccupied = (isMigrating && _mainQueue.IsOccupied(HalfCapacity)) ||
                                           (!isMigrating && _additionalQueue.IsOccupied(nextStep));
                             
                         if(isOccupied)
@@ -199,7 +163,7 @@ namespace CodeBase.Core.Factory.Conveyor
                         _additionalQueue.Off(lastStep);
                         ConveyorQueue pickedQueue = isMigrating ? _mainQueue : _additionalQueue;
                         pickedQueue.TryOccupy(nextStep);
-                        _lastSteps[item] = new ItemStep(nextStep, false);
+                        LastSteps[item] = new ItemStep(nextStep, false);
                     }
                 }
             }
@@ -213,11 +177,11 @@ namespace CodeBase.Core.Factory.Conveyor
                 node is not ReceiverNode receiverNode) return false;
             
             if (!receiverNode.TryAccept(new ItemTransfer(item, this))) return false;
+            
             Items.RemoveAt(n);
-            _lastSteps.Remove(item);
+            LastSteps.Remove(item);
             _mainQueue.Off(step);
             return true;
-
         }
     }
 }

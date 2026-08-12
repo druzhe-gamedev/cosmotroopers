@@ -10,20 +10,17 @@ using UnityEngine;
 
 namespace CodeBase.Application.Factory.Conveyor
 {
-    public sealed class ConveyorView : FactoryNodeView<ConveyorSegment>
+    public sealed class ConveyorView : FactoryNodeView<ConveyorBase>
     {
         [SerializeField] private MaterialView _materialView;
-        [SerializeField] private TMP_Text _text;
         private readonly Dictionary<ItemOnBelt, MaterialView> _materialViews = new();
-        public override ConveyorSegment Node { get; protected set; }
+        public override ConveyorBase Node { get; protected set; }
         
-        protected override void OnSetup(ConveyorSegment conveyorSegment)
+        protected override void OnSetup(ConveyorBase conveyorSegment)
         {
             Node = conveyorSegment;
             Node.Items.CollectionChanged += OnCollectionChanged;
         }
-
-        private void Update() => _text.text = $"MainQueue: {Node.MainQueue} \n AddQueue: {Node.AdditionalQueue}";
 
         private void SetMaterialMovement(MaterialView materialView, ItemOnBelt item)
         {
