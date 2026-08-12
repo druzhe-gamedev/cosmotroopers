@@ -7,13 +7,27 @@ using CodeBase.Core.Mathematics;
 using DG.Tweening;
 using UniRx;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using VContainer;
 using Vector2Int = CodeBase.Core.Mathematics.Vector2Int;
 
 namespace CodeBase.Application.Grid.Interaction
 {
     public record ValidNodePositioning(NodePositioning NodePositioning, float Y) : NodeViewPositioning;
-    public record WrongNodePositioning : NodeViewPositioning;
+    public record WrongNodePositioning : NodeViewPositioning
+    {
+        public static WrongNodePositioning Default
+        {
+            get
+            {
+                _default ??= new WrongNodePositioning();
+
+                return _default;
+            }
+        }
+        private static WrongNodePositioning _default;
+        
+    }
     public abstract record NodeViewPositioning;
     
     public class Building : MonoBehaviour
@@ -61,18 +75,16 @@ namespace CodeBase.Application.Grid.Interaction
                 );
             }).AddTo(this);
             
-            Observable.EveryUpdate().Where(_ => Input.anyKeyDown && _factoryNodeAsset != null).Select(_ => Input.inputString)
-                      .Subscribe(key =>
+            Observable.EveryUpdate()
+                      .Select(_ => Input.GetAxisRaw("Mouse ScrollWheel"))
+                      .Where(scroll => scroll != 0)
+                      .ThrottleFirst(TimeSpan.FromMilliseconds(150))
+                      .Subscribe(scroll =>
                       {
-                          switch (key.ToLowerInvariant())
-                          {
-                              case "a":
-                                  _nodeRotation.RotateCcw();
-                                  break;
-                              case "d":
-                                  _nodeRotation.RotateCw();
-                                  break;
-                          }
+                          if(scroll > 0)
+                              _nodeRotation.RotateCcw();
+                          else 
+                              _nodeRotation.RotateCw();
                           
                           Vector2Int lookVector = _nodeRotation.ToVector();
                           Vector3 forward = Vector3.right * lookVector.X + Vector3.forward * lookVector.Y;
@@ -86,7 +98,7 @@ namespace CodeBase.Application.Grid.Interaction
             Observable.EveryUpdate()
                       .WithLatestFrom(validPositioningStream, (_, positioning) => positioning)
                       .Where(CanSetupNode)
-                      .Where(_ => Input.GetMouseButtonDown(0))
+                      .Where(_ => !EventSystem.current.IsPointerOverGameObject() && Input.GetMouseButtonDown(0))
                       .Subscribe(InstantiateNode)
                       .AddTo(this);
         }
@@ -100,15 +112,14 @@ namespace CodeBase.Application.Grid.Interaction
         private void InstantiateNode(ValidNodePositioning nodePositioning)
         {
             FactoryNodeView factoryNodeView = Instantiate(_factoryNodeAsset.FactoryNodeView);
-            ValidNodePositioning positioning = nodePositioning;
-            Vector2Int position = positioning.NodePositioning.Position;
-            factoryNodeView.transform.position = new Vector3(position.X, positioning.Y, position.Y);
+            Vector2Int position = nodePositioning.NodePositioning.Position;
+            factoryNodeView.transform.position = new Vector3(position.X, nodePositioning.Y, position.Y);
 
             Vector2Int lookVector = _nodeRotation.ToVector();
             Vector3 forward = Vector3.right * lookVector.X + Vector3.forward * lookVector.Y;
             factoryNodeView.transform.forward = forward;
 
-            FactoryNode node = _factoryNodeAsset.CreateNode(_gridMap, positioning.NodePositioning);
+            FactoryNode node = _factoryNodeAsset.CreateNode(_gridMap, nodePositioning.NodePositioning);
             _gridMap.TryAddNode(node);
             factoryNodeView.Setup(node);
         }
@@ -120,15 +131,20 @@ namespace CodeBase.Application.Grid.Interaction
                 out RaycastHit raycastHit);
 
             if (!raycast || _factoryNodeAsset == null)
-                return new WrongNodePositioning();
+                return WrongNodePositioning.Default;
             
             Vector3 targetPosition = Vector3.right * (int)Math.Ceiling(raycastHit.point.x + _offset.x) +
                                      Vector3.forward * (int)Math.Ceiling(raycastHit.point.z + _offset.y) +
                                      raycastHit.normal * _offsetY;
 
+            Vector2Int gridPosition = new ((int)targetPosition.x, (int)targetPosition.z);
+
+            if(_gridMap.FactoryNodes.TryGetValue(gridPosition, out _))
+                return WrongNodePositioning.Default;
+            
             return new ValidNodePositioning(
                 new NodePositioning(
-                    new Vector2Int((int)targetPosition.x, (int)targetPosition.z),
+                    gridPosition,
                     new Vector2Int(_factoryNodeAsset.Size.x, _factoryNodeAsset.Size.y),
                     _nodeRotation
                 ),
